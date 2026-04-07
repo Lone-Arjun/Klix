@@ -60,7 +60,10 @@ class SessionStateManager:
             
         try:
             session_dir = self._get_session_dir()
+            # Enforce 0o700 permissions for session directory (rwx------)
             session_dir.mkdir(parents=True, exist_ok=True)
+            session_dir.chmod(0o700)
+
             session_file = self._get_session_file(session_id)
             
             state_dict = asdict(state) if is_dataclass(state) else getattr(state, "__dict__", {})
@@ -70,6 +73,8 @@ class SessionStateManager:
                 "version": 1, # TODO: Versioning mechanism for schema evolution
                 "state": state_dict
             }
+            # Write session data and enforce 0o600 permissions (rw-------)
             session_file.write_text(json.dumps(data))
+            session_file.chmod(0o600)
         except Exception as e:
             print(f"Failed to save persistent session: {e}")
